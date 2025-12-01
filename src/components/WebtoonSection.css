@@ -1,0 +1,50 @@
+.webtoon-section {
+  width: 100%;
+}
+
+.webtoon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+  padding: 20px 0;
+}
+
+.webtoon-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.webtoon-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.webtoon-thumbnail {
+  width: 100%;
+  height: 250px;
+  background: linear-gradient(135deg, #ffe6f2 0%, #ffb3d9 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+}
+
+.webtoon-info {
+  padding: 15px;
+}
+
+.webtoon-info h3 {
+  font-size: 1.1rem;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.webtoon-info p {
+  font-size: 0.9rem;
+  color: #666;
+}
+
