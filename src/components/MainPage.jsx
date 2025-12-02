@@ -253,33 +253,78 @@ const MainPage = () => {
   }
 
   const handleGenerate = async (data) => {
+    alert('AI가 게임을 생성 중입니다... 30초~1분 정도 소요됩니다.')
+
     try {
       const response = await fetch(API_ENDPOINTS.generate, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await user.getIdToken()}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          prompt: data.prompt,
           type: data.type,
-          metadata: data.metadata,
-          userId: user.uid
+          metadata: data.metadata
         })
       })
-      
-      if (response.ok) {
-        const result = await response.json()
-        alert(`${data.type === 'game' ? '게임' : '시뮬레이션'}이 생성되었습니다!`)
-        // TODO: 생성된 콘텐츠를 목록에 추가
-        window.location.reload()
-      } else {
+
+      if (!response.ok) {
         const error = await response.json()
-        alert(`생성 실패: ${error.message || '알 수 없는 오류'}`)
+        throw new Error(error.error || '생성 실패')
       }
+
+      const result = await response.json()
+
+      if (!result.success || !result.html) {
+        throw new Error('생성된 HTML이 없습니다.')
+      }
+
+      console.log('AI 생성 완료, HTML 길이:', result.html.length)
+
+      // 생성된 게임/시뮬레이션 정보 생성
+      const newItem = {
+        title: result.title || `${data.metadata.unit} - ${data.metadata.gameType}`,
+        url: '',
+        thumbnail: '/thumbnails/default.png',
+        grade: data.metadata.grade || '사용자',
+        category: data.metadata.category || data.metadata.gameType,
+        description: `AI로 생성된 ${data.type === 'game' ? '게임' : '시뮬레이션'} - ${data.metadata.unit}`,
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        uploadedBy: user?.displayName || '사용자',
+        userId: user?.uid || '',
+        htmlContent: result.html // 생성된 HTML
+      }
+
+      // Firestore에 저장
+      try {
+        if (data.type === 'game') {
+          await saveGameToFirestore(newItem, user?.uid || 'anonymous')
+          alert('✅ AI 게임 생성 완료! 게임이 업로드되었습니다.')
+        } else {
+          await saveSimulationToFirestore(newItem, user?.uid || 'anonymous')
+          alert('✅ AI 시뮬레이션 생성 완료! 시뮬레이션이 업로드되었습니다.')
+        }
+      } catch (firestoreError) {
+        console.error('Firestore 저장 실패, 로컬에만 저장:', firestoreError)
+
+        // Firestore 실패 시 로컬 스토리지에만 저장
+        const storageKey = data.type === 'game' ? STORAGE_KEYS.GAMES : STORAGE_KEYS.SIMULATIONS
+        const existingItems = JSON.parse(localStorage.getItem(storageKey) || '[]')
+        const newItemWithId = {
+          ...newItem,
+          id: Date.now().toString()
+        }
+        existingItems.push(newItemWithId)
+        localStorage.setItem(storageKey, JSON.stringify(existingItems))
+
+        alert('✅ AI 생성 완료! (로컬에만 저장됨)')
+        window.location.reload()
+      }
+
     } catch (error) {
-      console.error('Generation error:', error)
-      alert('생성 중 오류가 발생했습니다.')
+      console.error('AI 생성 오류:', error)
+      alert('❌ AI 생성 실패: ' + error.message)
     }
   }
 

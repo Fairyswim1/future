@@ -142,11 +142,11 @@ const ContentCard = ({ item, type, onDelete, onUpdate }) => {
       
       // 2순위: htmlUrl이 있으면 새 창에서 열기
       if (item.htmlUrl) {
-        // Firebase Storage URL은 직접 열기 (CORS 문제 방지)
+        // Firebase Storage URL은 Content-Type이 설정되어 있으므로 직접 열기
         if (item.htmlUrl.includes('firebasestorage.googleapis.com')) {
           window.open(item.htmlUrl, '_blank')
         } else {
-          // 다른 URL은 fetch 시도
+          // 다른 URL은 fetch해서 가져온 후 새 창에 작성
           fetch(item.htmlUrl)
             .then(response => {
               if (!response.ok) throw new Error('HTTP error!')
@@ -157,8 +157,7 @@ const ContentCard = ({ item, type, onDelete, onUpdate }) => {
             })
             .catch(error => {
               console.error('HTML 로드 실패:', error)
-              // fetch 실패 시 직접 URL로 열기 (CORS 문제일 수 있음)
-              window.open(item.htmlUrl, '_blank')
+              alert('게임을 불러오는데 실패했습니다: ' + error.message)
             })
         }
         return
@@ -191,29 +190,32 @@ const ContentCard = ({ item, type, onDelete, onUpdate }) => {
       return
     }
     
-    // 2순위: htmlUrl이 있으면 fetch해서 새 창에서 열기
+    // 2순위: htmlUrl이 있으면 새 창에서 열기
     if (item.htmlUrl) {
       console.log('htmlUrl로 새 창 열기:', item.htmlUrl)
-      
-      // 모든 URL을 fetch해서 가져온 후 새 창에 작성 (다운로드 방지)
-      fetch(item.htmlUrl)
-        .then(response => {
-          if (!response.ok) throw new Error('HTTP error!')
-          return response.text()
-        })
-        .then(html => {
-          console.log('fetch 성공, 새 창 열기')
-          openGameInNewWindow(html, item.title)
-        })
-        .catch(error => {
-          console.error('HTML 로드 실패:', error)
-          // fetch 실패 시 (CORS 문제) 직접 URL로 열기 (다운로드 가능성 있음)
-          alert('게임을 불러오는데 실패했습니다. 새 창에서 열어보겠습니다.')
-          const newWindow = window.open(item.htmlUrl, '_blank')
-          if (!newWindow) {
-            alert('팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.')
-          }
-        })
+
+      // Firebase Storage URL은 Content-Type이 설정되어 있으므로 직접 열기
+      if (item.htmlUrl.includes('firebasestorage.googleapis.com')) {
+        const newWindow = window.open(item.htmlUrl, '_blank')
+        if (!newWindow) {
+          alert('팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.')
+        }
+      } else {
+        // 다른 URL은 fetch해서 가져온 후 새 창에 작성
+        fetch(item.htmlUrl)
+          .then(response => {
+            if (!response.ok) throw new Error('HTTP error!')
+            return response.text()
+          })
+          .then(html => {
+            console.log('fetch 성공, 새 창 열기')
+            openGameInNewWindow(html, item.title)
+          })
+          .catch(error => {
+            console.error('HTML 로드 실패:', error)
+            alert('게임을 불러오는데 실패했습니다: ' + error.message)
+          })
+      }
       return
     }
     

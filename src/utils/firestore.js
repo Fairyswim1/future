@@ -28,7 +28,10 @@ export const saveGameToFirestore = async (game, userId) => {
     // htmlContent가 있는 경우에만 Storage에 업로드 (링크 삽입의 경우 htmlContent 없음)
     if (game.htmlContent) {
       const storageRef = ref(storage, `games/${userId}/${Date.now()}.html`)
-      await uploadString(storageRef, game.htmlContent, 'raw')
+      // Content-Type을 text/html로 설정하여 업로드 (다운로드 방지)
+      await uploadString(storageRef, game.htmlContent, 'raw', {
+        contentType: 'text/html; charset=utf-8'
+      })
       htmlUrl = await getDownloadURL(storageRef)
     }
 
@@ -101,7 +104,10 @@ export const saveSimulationToFirestore = async (simulation, userId) => {
     // htmlContent가 있는 경우에만 Storage에 업로드 (링크 삽입의 경우 htmlContent 없음)
     if (simulation.htmlContent) {
       const storageRef = ref(storage, `simulations/${userId}/${Date.now()}.html`)
-      await uploadString(storageRef, simulation.htmlContent, 'raw')
+      // Content-Type을 text/html로 설정하여 업로드 (다운로드 방지)
+      await uploadString(storageRef, simulation.htmlContent, 'raw', {
+        contentType: 'text/html; charset=utf-8'
+      })
       htmlUrl = await getDownloadURL(storageRef)
     }
 

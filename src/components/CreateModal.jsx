@@ -164,13 +164,10 @@ const CreateModal = ({ isOpen, onClose, onUpload, onLinkInsert, onGenerate, onWe
   }
 
   const gameTypes = [
-    '퀴즈/문제 풀이',
-    '퍼즐/퍼즐 맞추기',
-    '액션/실시간 반응',
-    '롤플레잉(RPG)',
-    '보드 게임',
-    '카드 게임',
-    '기타'
+    '퀴즈/카드 뒤집기',
+    '방탈출/퍼즐',
+    '스토리/미션형',
+    '보드게임'
   ]
 
   const simulationTypes = [
@@ -415,13 +412,14 @@ const CreateModal = ({ isOpen, onClose, onUpload, onLinkInsert, onGenerate, onWe
               </div>
 
               <div className="form-section">
-                <label className="form-label">단원 선택</label>
+                <label className="form-label">단원 / 핵심 개념 <span style={{color: 'red'}}>*</span></label>
                 <input
                   type="text"
                   value={vibeQuestions.unit}
                   onChange={(e) => setVibeQuestions({...vibeQuestions, unit: e.target.value})}
-                  placeholder="예: 덧셈과 뺄셈, 분수, 도형 등"
+                  placeholder="예: 일차함수 - 그래프 그리기"
                   className="form-input"
+                  required
                 />
               </div>
 
@@ -462,9 +460,9 @@ const CreateModal = ({ isOpen, onClose, onUpload, onLinkInsert, onGenerate, onWe
                 <textarea
                   value={vibeQuestions.description}
                   onChange={(e) => setVibeQuestions({...vibeQuestions, description: e.target.value})}
-                  placeholder="원하는 기능이나 특징을 자유롭게 설명해주세요..."
+                  placeholder="원하는 스토리, 시간(예: 10분 이내), 포함/제외할 내용, 반 분위기 등을 자유롭게 적어주세요.&#10;예시: 실생활 예시 많이, 경쟁 요소 줄이기, 분모 10 이하만 사용 등"
                   className="form-textarea"
-                  rows="4"
+                  rows="5"
                 />
               </div>
 
