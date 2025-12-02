@@ -165,7 +165,7 @@ app.post('/api/generate', async (req, res) => {
     console.log('프롬프트 생성 완료')
 
     // Gemini API 호출
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' })
 
     const fullPrompt = `당신은 교육용 웹 콘텐츠를 만드는 전문가입니다. HTML, CSS, JavaScript를 사용하여 완전한 단일 파일 웹 애플리케이션을 만듭니다.
 
