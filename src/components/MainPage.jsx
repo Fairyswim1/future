@@ -4,6 +4,7 @@ import ContentCarousel from './ContentCarousel'
 import WebtoonSection from './WebtoonSection'
 import CreateModal from './CreateModal'
 import LoginModal from './LoginModal'
+import LoadingModal from './LoadingModal'
 import { API_ENDPOINTS } from '../config/api'
 import { saveGame, getGames, saveSimulation, getSimulations, createBlobURL, deleteGame, updateGame, deleteSimulation, updateSimulation } from '../utils/storage'
 import { 
@@ -22,6 +23,8 @@ const MainPage = () => {
   const { user, isAuthenticated, logout } = useAuth()
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showLoginModal, setShowLoginModal] = useState(false)
+  const [showLoadingModal, setShowLoadingModal] = useState(false)
+  const [loadingProgress, setLoadingProgress] = useState(0)
   
   // 기본 수학 게임 데이터
   const defaultGames = [
@@ -253,7 +256,16 @@ const MainPage = () => {
   }
 
   const handleGenerate = async (data) => {
-    alert('AI가 게임을 생성 중입니다... 30초~1분 정도 소요됩니다.')
+    setShowLoadingModal(true)
+    setLoadingProgress(0)
+
+    // 진행률 시뮬레이션 (실제 진행률은 알 수 없으므로)
+    const progressInterval = setInterval(() => {
+      setLoadingProgress(prev => {
+        if (prev >= 90) return prev
+        return prev + Math.random() * 15
+      })
+    }, 500)
 
     try {
       const response = await fetch(API_ENDPOINTS.generate, {
@@ -267,6 +279,9 @@ const MainPage = () => {
         })
       })
 
+      clearInterval(progressInterval)
+      setLoadingProgress(95)
+
       if (!response.ok) {
         const error = await response.json()
         throw new Error(error.error || '생성 실패')
@@ -278,6 +293,7 @@ const MainPage = () => {
         throw new Error('생성된 HTML이 없습니다.')
       }
 
+      setLoadingProgress(100)
       console.log('AI 생성 완료, HTML 길이:', result.html.length)
 
       // 생성된 게임/시뮬레이션 정보 생성
@@ -324,7 +340,14 @@ const MainPage = () => {
 
     } catch (error) {
       console.error('AI 생성 오류:', error)
+      setShowLoadingModal(false)
+      setLoadingProgress(0)
       alert('❌ AI 생성 실패: ' + error.message)
+    } finally {
+      setTimeout(() => {
+        setShowLoadingModal(false)
+        setLoadingProgress(0)
+      }, 1000)
     }
   }
 
@@ -508,6 +531,11 @@ const MainPage = () => {
         isOpen={showLoginModal}
         onClose={() => setShowLoginModal(false)}
         onSuccess={() => setShowCreateModal(true)}
+      />
+      <LoadingModal
+        isOpen={showLoadingModal}
+        message="AI가 게임을 생성 중입니다..."
+        progress={Math.floor(loadingProgress)}
       />
     </div>
   )
