@@ -1,17 +1,15 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import OpenAI from 'openai'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
 dotenv.config()
 
 const app = express()
 const PORT = process.env.PORT || 3000
 
-// OpenAI 클라이언트 초기화
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-})
+// Gemini AI 클라이언트 초기화
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY)
 
 // 미들웨어
 const allowedOrigins = [
@@ -166,24 +164,16 @@ app.post('/api/generate', async (req, res) => {
 
     console.log('프롬프트 생성 완료')
 
-    // OpenAI API 호출
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'system',
-          content: '당신은 교육용 웹 콘텐츠를 만드는 전문가입니다. HTML, CSS, JavaScript를 사용하여 완전한 단일 파일 웹 애플리케이션을 만듭니다.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 4000
-    })
+    // Gemini API 호출
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
 
-    let htmlContent = completion.choices[0].message.content.trim()
+    const fullPrompt = `당신은 교육용 웹 콘텐츠를 만드는 전문가입니다. HTML, CSS, JavaScript를 사용하여 완전한 단일 파일 웹 애플리케이션을 만듭니다.
+
+${prompt}`
+
+    const result = await model.generateContent(fullPrompt)
+    const response = await result.response
+    let htmlContent = response.text().trim()
 
     // 마크다운 코드 블록 제거 (혹시 포함되어 있을 경우)
     if (htmlContent.startsWith('```html')) {
@@ -228,13 +218,17 @@ app.post('/api/generate', async (req, res) => {
 
 // 헬스체크 엔드포인트
 app.get('/api/health', (req, res) => {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY
   res.json({
     status: 'ok',
-    openaiConfigured: !!process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your-openai-api-key-here'
+    aiConfigured: !!apiKey && !apiKey.includes('your-'),
+    aiProvider: process.env.GEMINI_API_KEY ? 'Gemini' : 'OpenAI'
   })
 })
 
 app.listen(PORT, () => {
   console.log(`🚀 서버가 포트 ${PORT}에서 실행 중입니다.`)
-  console.log(`OpenAI API 설정: ${process.env.OPENAI_API_KEY ? '✓ 완료' : '✗ 미설정'}`)
+  const apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY
+  const provider = process.env.GEMINI_API_KEY ? 'Gemini' : 'OpenAI'
+  console.log(`AI API 설정: ${apiKey ? '✓ ' + provider : '✗ 미설정'}`)
 })
