@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>테스트 게임</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        .score {
+            font-size: 2rem;
+            color: #764ba2;
+            margin: 20px 0;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #764ba2;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 수학 게임 테스트</h1>
+        <p>간단한 더하기 게임입니다</p>
+        <div class="score">점수: <span id="score">0</span></div>
+        <button onclick="play()">시작하기</button>
+    </div>
+
+    <script>
+        let score = 0;
+
+        function play() {
+            const num1 = Math.floor(Math.random() * 10) + 1;
+            const num2 = Math.floor(Math.random() * 10) + 1;
+            const answer = prompt(`${num1} + ${num2} = ?`);
+
+            if (parseInt(answer) === num1 + num2) {
+                score++;
+                alert('정답입니다! 🎉');
+            } else {
+                alert('틀렸습니다. 다시 도전하세요!');
+            }
+
+            document.getElementById('score').textContent = score;
+        }
+    </script>
+</body>
+</html>

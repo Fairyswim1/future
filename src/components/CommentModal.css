@@ -8,7 +8,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9999;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
 }
 
 .comment-modal {
@@ -28,33 +32,41 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
 }
 
 .comment-modal-header h3 {
   margin: 0;
   color: #333;
   font-size: 1.3rem;
+  flex: 1;
 }
 
 .close-btn {
-  background: none;
-  border: none;
+  background: #f5f5f5;
+  border: 2px solid #ddd;
   font-size: 2rem;
-  color: #999;
+  color: #333;
   cursor: pointer;
   padding: 0;
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   transition: all 0.2s ease;
+  line-height: 1;
+  font-weight: 400;
+  flex-shrink: 0;
+  margin-left: 15px;
 }
 
 .close-btn:hover {
-  background: #f0f0f0;
-  color: #333;
+  background: #ff66b3;
+  border-color: #ff66b3;
+  color: #fff;
+  transform: scale(1.1);
 }
 
 .comment-list {

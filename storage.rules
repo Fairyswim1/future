@@ -1,0 +1,42 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // 게임 HTML 파일 - 인증된 사용자만 업로드, 모두 읽기 가능
+    match /games/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // 시뮬레이션 HTML 파일 - 인증된 사용자만 업로드, 모두 읽기 가능
+    match /simulations/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // 웹툰 HTML 파일 - 인증된 사용자만 업로드, 모두 읽기 가능
+    match /webtoons/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // 수업 도구 HTML 파일 - 인증된 사용자만 업로드, 모두 읽기 가능
+    match /tools/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // 썸네일 이미지 - 인증된 사용자만 업로드, 모두 읽기 가능
+    match /thumbnails/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+
+    // 기본적으로 다른 모든 경로는 거부
+    match /{allPaths=**} {
+      allow read: if false;
+      allow write: if false;
+    }
+  }
+}

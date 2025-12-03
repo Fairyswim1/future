@@ -25,9 +25,6 @@ const LoadingModal = ({ isOpen, message, progress }) => {
           <span className="dot"></span>
           <span className="dot"></span>
         </div>
-        <p className="loading-tip">
-          💡 Tip: 서버가 슬립 상태였다면 깨우는데 30초 정도 더 걸릴 수 있습니다.
-        </p>
       </div>
     </div>
   )

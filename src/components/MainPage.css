@@ -86,6 +86,18 @@
   text-align: left;
 }
 
+.section-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+  gap: 20px;
+}
+
+.section-title-row > div {
+  flex: 1;
+}
+
 .section-header h2 {
   font-size: 1.8rem;
   color: #333;
@@ -99,3 +111,91 @@
   margin: 0;
 }
 
+.view-all-btn {
+  padding: 10px 20px;
+  background: #fff;
+  color: #ff66b3;
+  border: 2px solid #ff66b3;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.view-all-btn:hover {
+  background: #ff66b3;
+  color: #fff;
+  transform: translateX(5px);
+  box-shadow: 0 4px 12px rgba(255, 102, 179, 0.3);
+}
+
+.view-all-btn:active {
+  transform: translateX(3px);
+}
+
+/* 모바일 대응 */
+@media (max-width: 768px) {
+  .main-page {
+    padding: 40px 15px;
+  }
+
+  .create-button-container {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+
+  .user-info {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .create-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .section-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .view-all-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .section-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .content-section {
+    margin-bottom: 60px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-page {
+    padding: 30px 10px;
+  }
+
+  .section-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .create-button {
+    font-size: 1rem;
+    padding: 12px 24px;
+  }
+
+  .view-all-btn {
+    font-size: 0.9rem;
+    padding: 8px 16px;
+  }
+}

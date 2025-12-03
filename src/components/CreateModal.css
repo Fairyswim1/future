@@ -120,11 +120,29 @@
   padding: 40px;
   text-align: center;
   transition: all 0.2s ease;
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .file-upload-area:hover {
   border-color: #ff66b3;
   background: #fff5f9;
+}
+
+.file-upload-area.dragging {
+  border-color: #ff66b3;
+  background: linear-gradient(135deg, #fff5f9 0%, #ffe6f2 100%);
+  border-style: solid;
+  transform: scale(1.02);
+  box-shadow: 0 4px 20px rgba(255, 102, 179, 0.2);
+}
+
+.file-upload-area.has-file {
+  border-color: #4CAF50;
+  background: #f0f9f0;
+  border-style: solid;
 }
 
 .file-input {
@@ -135,17 +153,112 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   cursor: pointer;
+  color: #666;
+  width: 100%;
+}
+
+.file-upload-icon {
+  font-size: 3rem;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.file-upload-text {
+  font-size: 1rem;
+  font-weight: 500;
   color: #666;
 }
 
-.file-upload-label span:first-child {
-  font-size: 3rem;
+.file-upload-text-drag {
+  font-size: 0.9rem;
+  color: #999;
+  font-weight: 400;
 }
 
-.file-upload-label span:last-child {
+.file-selected {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 16px;
+  background: #fff;
+  border-radius: 8px;
+}
+
+.file-icon {
+  font-size: 2.5rem;
+}
+
+.file-info {
+  flex: 1;
+  text-align: left;
+}
+
+.file-name {
+  margin: 0 0 4px 0;
+  font-weight: 600;
+  color: #333;
   font-size: 1rem;
+}
+
+.file-size {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.file-remove-btn {
+  background: #ff4444;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.2s ease;
+}
+
+.file-remove-btn:hover {
+  background: #cc0000;
+  transform: scale(1.1);
+}
+
+.upload-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 20px;
+}
+
+.upload-btn:hover {
+  background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.upload-btn:active {
+  transform: translateY(0);
 }
 
 .vibe-questions {

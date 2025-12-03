@@ -1,14 +1,18 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import './CreateModal.css'
 
-const CreateModal = ({ isOpen, onClose, onUpload, onLinkInsert, onGenerate, onWebtoonUpload, onWebtoonGenerate }) => {
-  const [contentType, setContentType] = useState('game') // 'game', 'simulation', or 'webtoon'
+const CreateModal = ({ isOpen, onClose, onUpload, onLinkInsert, onGenerate, onToolUpload, onToolLinkInsert }) => {
+  const [contentType, setContentType] = useState('game') // 'game', 'simulation', or 'tool'
   const [createMethod, setCreateMethod] = useState('upload') // 'upload', 'link', or 'vibe'
   
   // 파일 업로드 정보
   const [uploadTitle, setUploadTitle] = useState('')
   const [uploadGrade, setUploadGrade] = useState('')
   const [uploadCategory, setUploadCategory] = useState('')
+  const [selectedFile, setSelectedFile] = useState(null) // 선택된 파일 정보
+  const [fileContent, setFileContent] = useState(null) // 파일 내용
+  const [isDragging, setIsDragging] = useState(false) // 드래그 상태
+  const fileInputRef = useRef(null)
   
   // 링크 삽입 정보
   const [linkUrl, setLinkUrl] = useState('')
@@ -26,40 +30,41 @@ const CreateModal = ({ isOpen, onClose, onUpload, onLinkInsert, onGenerate, onWe
     description: ''
   })
 
+  // 모달이 닫힐 때 상태 초기화
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedFile(null)
+      setFileContent(null)
+      setUploadTitle('')
+      setUploadGrade('')
+      setUploadCategory('')
+      setLinkUrl('')
+      setLinkTitle('')
+      setLinkGrade('')
+      setLinkCategory('')
+      setLinkDescription('')
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }, [isOpen])
+
   if (!isOpen) return null
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0]
+  // 파일 처리 공통 함수
+  const processFile = (file) => {
     if (file && (file.type === 'text/html' || file.name.endsWith('.html'))) {
       const reader = new FileReader()
       reader.onload = (event) => {
-        const title = uploadTitle || file.name.replace(/\.html$/i, '')
-        
-        if (contentType === 'webtoon') {
-          if (onWebtoonUpload) {
-            onWebtoonUpload({
-              file: event.target.result,
-              filename: file.name,
-              title: title
-            })
-          }
-        } else {
-          if (onUpload) {
-            onUpload({
-              type: contentType,
-              file: event.target.result,
-              filename: file.name,
-              title: title,
-              grade: uploadGrade,
-              category: uploadCategory
-            })
-          }
+        setSelectedFile({
+          name: file.name,
+          size: file.size
+        })
+        setFileContent(event.target.result)
+        // 파일명을 기본 제목으로 설정 (사용자가 변경 가능)
+        if (!uploadTitle) {
+          setUploadTitle(file.name.replace(/\.html$/i, ''))
         }
-        // 입력 필드 초기화
-        setUploadTitle('')
-        setUploadGrade('')
-        setUploadCategory('')
-        onClose()
       }
       reader.readAsText(file)
     } else {
@@ -67,6 +72,78 @@ const CreateModal = ({ isOpen, onClose, onUpload, onLinkInsert, onGenerate, onWe
     }
   }
 
+  // 파일 선택 핸들러 (업로드하지 않고 상태에만 저장)
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0]
+    processFile(file)
+  }
+
+  // 드래그 앤 드롭 핸들러
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+
+    const files = e.dataTransfer.files
+    if (files && files.length > 0) {
+      processFile(files[0])
+    }
+  }
+
+  // 실제 업로드 실행
+  const handleUploadClick = () => {
+    if (!selectedFile || !fileContent) {
+      alert('HTML 파일을 선택해주세요.')
+      return
+    }
+
+    const title = uploadTitle || selectedFile.name.replace(/\.html$/i, '')
+    
+    if (contentType === 'tool') {
+      if (onToolUpload) {
+        onToolUpload({
+          file: fileContent,
+          filename: selectedFile.name,
+          title: title,
+          grade: uploadGrade,
+          category: uploadCategory
+        })
+      }
+    } else {
+      if (onUpload) {
+        onUpload({
+          type: contentType,
+          file: fileContent,
+          filename: selectedFile.name,
+          title: title,
+          grade: uploadGrade,
+          category: uploadCategory
+        })
+      }
+    }
+    
+    // 입력 필드 초기화
+    setSelectedFile(null)
+    setFileContent(null)
+    setUploadTitle('')
+    setUploadGrade('')
+    setUploadCategory('')
+    onClose()
+  }
+
+  // 링크 삽입 실행
   const handleLinkInsert = () => {
     if (!linkUrl || !linkTitle) {
       alert('링크 URL과 제목을 입력해주세요.')
@@ -79,10 +156,9 @@ const CreateModal = ({ isOpen, onClose, onUpload, onLinkInsert, onGenerate, onWe
       return
     }
     
-    if (contentType === 'webtoon') {
-      if (onWebtoonUpload) {
-        onWebtoonUpload({
-          type: 'link',
+    if (contentType === 'tool') {
+      if (onToolLinkInsert) {
+        onToolLinkInsert({
           url: linkUrl,
           title: linkTitle,
           grade: linkGrade,
@@ -113,28 +189,10 @@ const CreateModal = ({ isOpen, onClose, onUpload, onLinkInsert, onGenerate, onWe
   }
 
   const handleVibeGenerate = () => {
-    if (contentType === 'webtoon') {
-      // 웹툰의 경우 다른 질문들
-      if (!vibeQuestions.grade || !vibeQuestions.unit || !vibeQuestions.description) {
-        alert('필수 항목을 모두 입력해주세요.')
-        return
-      }
-
-      const prompt = `수학 웹툰을 만들어주세요.
-
-학년: ${vibeQuestions.grade}
-단원: ${vibeQuestions.unit}
-스타일: ${vibeQuestions.gameType || '일반'}
-설명: ${vibeQuestions.description}
-
-위 조건에 맞는 수학 웹툰을 HTML, CSS, JavaScript로 완전한 웹 페이지로 만들어주세요.`
-
-      if (onWebtoonGenerate) {
-        onWebtoonGenerate({
-          prompt: prompt,
-          metadata: vibeQuestions
-        })
-      }
+    // 수업 도구는 바이브 코딩 지원 안 함
+    if (contentType === 'tool') {
+      alert('수업 도구는 파일 업로드 또는 링크 삽입만 가능합니다.')
+      return
     } else {
       // 게임/시뮬레이션의 경우
       if (!vibeQuestions.grade || !vibeQuestions.unit || !vibeQuestions.gameType || !vibeQuestions.difficulty || !vibeQuestions.description) {
@@ -179,13 +237,6 @@ const CreateModal = ({ isOpen, onClose, onUpload, onLinkInsert, onGenerate, onWe
     '기타'
   ]
 
-  const webtoonStyles = [
-    '일반',
-    '만화 스타일',
-    '일러스트 스타일',
-    '애니메이션 스타일',
-    '기타'
-  ]
 
   return (
     <div className="create-modal-overlay" onClick={onClose}>
@@ -221,11 +272,11 @@ const CreateModal = ({ isOpen, onClose, onUpload, onLinkInsert, onGenerate, onWe
               <label className="radio-label">
                 <input
                   type="radio"
-                  value="webtoon"
-                  checked={contentType === 'webtoon'}
+                  value="tool"
+                  checked={contentType === 'tool'}
                   onChange={(e) => setContentType(e.target.value)}
                 />
-                <span>수학 웹툰</span>
+                <span>수학 수업 도구</span>
               </label>
             </div>
           </div>
@@ -252,15 +303,17 @@ const CreateModal = ({ isOpen, onClose, onUpload, onLinkInsert, onGenerate, onWe
                 />
                 <span>2. 링크 삽입하기</span>
               </label>
-              <label className="radio-label">
-                <input
-                  type="radio"
-                  value="vibe"
-                  checked={createMethod === 'vibe'}
-                  onChange={(e) => setCreateMethod(e.target.value)}
-                />
-                <span>3. 바이브 코딩으로 만들어보기</span>
-              </label>
+              {contentType !== 'tool' && (
+                <label className="radio-label">
+                  <input
+                    type="radio"
+                    value="vibe"
+                    checked={createMethod === 'vibe'}
+                    onChange={(e) => setCreateMethod(e.target.value)}
+                  />
+                  <span>3. 바이브 코딩으로 만들어보기</span>
+                </label>
+              )}
             </div>
           </div>
 
@@ -325,7 +378,7 @@ const CreateModal = ({ isOpen, onClose, onUpload, onLinkInsert, onGenerate, onWe
               </div>
               
               <button className="generate-btn" onClick={handleLinkInsert}>
-                링크 추가하기
+                ✅ 링크 추가하기
               </button>
             </div>
           )}
@@ -368,25 +421,61 @@ const CreateModal = ({ isOpen, onClose, onUpload, onLinkInsert, onGenerate, onWe
               
               <div className="form-section">
                 <label className="form-label">HTML 파일 선택</label>
-                <div className="file-upload-area">
+                <div
+                  className={`file-upload-area ${isDragging ? 'dragging' : ''}`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
                   <input
+                    ref={fileInputRef}
                     type="file"
                     accept=".html"
-                    onChange={handleFileUpload}
+                    onChange={handleFileSelect}
                     id="html-upload"
                     className="file-input"
                   />
-                  <label htmlFor="html-upload" className="file-upload-label">
-                    <span>📁</span>
-                    <span>HTML 파일을 선택하세요</span>
-                  </label>
+                  {selectedFile ? (
+                    <div className="file-selected">
+                      <span className="file-icon">📄</span>
+                      <div className="file-info">
+                        <p className="file-name">{selectedFile.name}</p>
+                        <p className="file-size">{(selectedFile.size / 1024).toFixed(2)} KB</p>
+                      </div>
+                      <button
+                        className="file-remove-btn"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedFile(null)
+                          setFileContent(null)
+                          if (fileInputRef.current) {
+                            fileInputRef.current.value = ''
+                          }
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <label htmlFor="html-upload" className="file-upload-label">
+                      <span className="file-upload-icon">📁</span>
+                      <span className="file-upload-text">HTML 파일을 선택하거나</span>
+                      <span className="file-upload-text-drag">여기로 드래그하세요</span>
+                    </label>
+                  )}
                 </div>
               </div>
+
+              {selectedFile && (
+                <button className="upload-btn" onClick={handleUploadClick}>
+                  ✅ 업로드하기
+                </button>
+              )}
             </div>
           )}
 
-          {/* 바이브 코딩 질문들 */}
-          {createMethod === 'vibe' && (
+          {/* 바이브 코딩 질문들 (수업 도구는 제외) */}
+          {createMethod === 'vibe' && contentType !== 'tool' && (
             <div className="vibe-questions">
               <div className="form-section">
                 <label className="form-label">학년 선택</label>
@@ -425,7 +514,7 @@ const CreateModal = ({ isOpen, onClose, onUpload, onLinkInsert, onGenerate, onWe
 
               <div className="form-section">
                 <label className="form-label">
-                  {contentType === 'game' ? '게임 형식' : contentType === 'simulation' ? '시뮬레이션 형식' : '웹툰 스타일'}
+                  {contentType === 'game' ? '게임 형식' : '시뮬레이션 형식'}
                 </label>
                 <select
                   value={vibeQuestions.gameType}
@@ -433,13 +522,13 @@ const CreateModal = ({ isOpen, onClose, onUpload, onLinkInsert, onGenerate, onWe
                   className="form-select"
                 >
                   <option value="">선택하세요</option>
-                  {(contentType === 'game' ? gameTypes : contentType === 'simulation' ? simulationTypes : webtoonStyles).map((type, index) => (
+                  {(contentType === 'game' ? gameTypes : simulationTypes).map((type, index) => (
                     <option key={index} value={type}>{type}</option>
                   ))}
                 </select>
               </div>
 
-              {contentType !== 'webtoon' && (
+              {contentType !== 'tool' && (
                 <div className="form-section">
                   <label className="form-label">난이도</label>
                   <select
