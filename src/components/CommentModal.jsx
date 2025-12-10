@@ -7,12 +7,15 @@ import {
   addToolComment,
   subscribeGameComments,
   subscribeSimulationComments,
-  subscribeToolComments
+  subscribeToolComments,
+  deleteGameComment,
+  deleteSimulationComment,
+  deleteToolComment
 } from '../utils/firestore'
 import './CommentModal.css'
 
 const CommentModal = ({ isOpen, onClose, item, type, onAddComment }) => {
-  const { user } = useAuth()
+  const { user, nickname } = useAuth()
   const [newComment, setNewComment] = useState('')
   const [comments, setComments] = useState([])
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -55,7 +58,8 @@ const CommentModal = ({ isOpen, onClose, item, type, onAddComment }) => {
 
     setIsSubmitting(true)
     try {
-      const userName = user.displayName || user.email || '익명'
+      // 닉네임 우선 사용, 없으면 displayName, 없으면 email, 없으면 익명
+      const userName = nickname || user.displayName || user.email || '익명'
       // item.id를 문자열로 변환 (Firebase는 문자열 ID를 요구함)
       const itemId = String(item.id)
 
@@ -81,6 +85,27 @@ const CommentModal = ({ isOpen, onClose, item, type, onAddComment }) => {
     }
   }
 
+  const handleDeleteComment = async (commentId) => {
+    if (!user) return
+    
+    if (!confirm('댓글을 삭제하시겠습니까?')) return
+
+    try {
+      const itemId = String(item.id)
+      
+      if (type === 'game') {
+        await deleteGameComment(itemId, commentId)
+      } else if (type === 'simulation') {
+        await deleteSimulationComment(itemId, commentId)
+      } else if (type === 'tool') {
+        await deleteToolComment(itemId, commentId)
+      }
+    } catch (error) {
+      console.error('댓글 삭제 실패:', error)
+      alert('댓글 삭제 중 오류가 발생했습니다.')
+    }
+  }
+
   if (!isOpen) return null
 
   const modalContent = (
@@ -96,7 +121,18 @@ const CommentModal = ({ isOpen, onClose, item, type, onAddComment }) => {
           ) : (
             comments.map((comment) => (
               <div key={comment.id} className="comment-item">
-                <div className="comment-author">{comment.author}</div>
+                <div className="comment-header">
+                  <div className="comment-author">{comment.author}</div>
+                  {user && comment.userId === user.uid && (
+                    <button 
+                      className="comment-delete-btn"
+                      onClick={() => handleDeleteComment(comment.id)}
+                      title="댓글 삭제"
+                    >
+                      삭제
+                    </button>
+                  )}
+                </div>
                 <div className="comment-text">{comment.text}</div>
                 <div className="comment-date">
                   {comment.createdAt 

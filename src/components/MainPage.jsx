@@ -30,6 +30,7 @@ const MainPage = () => {
   const { user, isAuthenticated, logout, nickname, updateNickname } = useAuth()
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [currentView, setCurrentView] = useState('dashboard') // 'dashboard', 'games', 'simulations', 'tools'
+  const [navScrolled, setNavScrolled] = useState(false)
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showLoadingModal, setShowLoadingModal] = useState(false)
   const [showPreviewModal, setShowPreviewModal] = useState(false)
@@ -230,6 +231,20 @@ const MainPage = () => {
       unsubscribeSimulations()
       unsubscribeTools()
     }
+  }, [])
+
+  // 스크롤 시 네비게이션 바 스타일 변경
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 50) {
+        setNavScrolled(true)
+      } else {
+        setNavScrolled(false)
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
   const handleCreateClick = () => {
@@ -778,28 +793,76 @@ const MainPage = () => {
 
   return (
     <div className="main-page">
-      <div className="create-button-container">
-        {user && (
-          <div className="user-info">
-            <img src={user.photoURL || '/default-avatar.png'} alt="avatar" className="user-avatar" />
-            <span
-              className="user-name"
-              onClick={() => setShowNicknameModal(true)}
-              style={{ cursor: 'pointer', textDecoration: 'underline' }}
-              title="닉네임 변경"
-            >
-              {nickname || user.displayName || '사용자'}
-            </span>
-            <button className="logout-button" onClick={handleLogout} title="로그아웃">
-              로그아웃
+      {/* 상단 네비게이션 바 */}
+      <nav className={`top-navigation ${navScrolled ? 'scrolled' : ''}`}>
+        <div className="nav-container">
+          <div className="nav-logo">
+            <h1>Math Genie</h1>
+          </div>
+          <ul className="nav-menu">
+            <li>
+              <button 
+                className={`nav-item ${currentView === 'dashboard' ? 'active' : ''}`}
+                onClick={() => setCurrentView('dashboard')}
+              >
+                대시보드
+              </button>
+            </li>
+            <li>
+              <button 
+                className={`nav-item ${currentView === 'games' ? 'active' : ''}`}
+                onClick={() => setCurrentView('games')}
+              >
+                게임
+              </button>
+            </li>
+            <li>
+              <button 
+                className={`nav-item ${currentView === 'simulations' ? 'active' : ''}`}
+                onClick={() => setCurrentView('simulations')}
+              >
+                시뮬레이션
+              </button>
+            </li>
+            <li>
+              <button 
+                className={`nav-item ${currentView === 'tools' ? 'active' : ''}`}
+                onClick={() => setCurrentView('tools')}
+              >
+                수업 도구
+              </button>
+            </li>
+          </ul>
+          <div className="nav-actions">
+            {user ? (
+              <div className="user-info">
+                <img src={user.photoURL || '/default-avatar.png'} alt="avatar" className="user-avatar" />
+                <span
+                  className="user-name"
+                  onClick={() => setShowNicknameModal(true)}
+                  title="닉네임 변경"
+                >
+                  {nickname || user.displayName || '사용자'}
+                </span>
+                <button className="logout-button" onClick={handleLogout} title="로그아웃">
+                  로그아웃
+                </button>
+              </div>
+            ) : (
+              <button className="login-button" onClick={() => setShowLoginModal(true)}>
+                로그인
+              </button>
+            )}
+            <button className="create-button" onClick={handleCreateClick}>
+              ✨ 만들기
             </button>
           </div>
-        )}
-        <button className="create-button" onClick={handleCreateClick}>
-          ✨ 만들기
-        </button>
-      </div>
+        </div>
+      </nav>
 
+      {/* 대시보드 콘텐츠 */}
+      {currentView === 'dashboard' && (
+        <div className="dashboard-content">
       <section className="content-section">
         <div className="section-header">
           <div className="section-title-row">
@@ -868,6 +931,8 @@ const MainPage = () => {
           onUpdate={handleUpdateTool}
         />
       </section>
+        </div>
+      )}
 
       <CreateModal
         isOpen={showCreateModal}

@@ -213,7 +213,12 @@ export const generateThumbnail = async (htmlContentOrUrl, isUrl = false) => {
             }
           }, 'image/png', 0.9) // 품질 90%
         } catch (error) {
-          console.error('썸네일 캡처 오류:', error)
+          // CSP/CORS 오류는 조용히 처리
+          if (error.message?.includes('CSP') || error.message?.includes('SecurityError') || error.message?.includes('cross-origin') || error.name === 'SecurityError') {
+            console.log('썸네일 캡처 실패 (보안 정책 제한):', error.message)
+          } else {
+            console.error('썸네일 캡처 오류:', error)
+          }
           clearTimeout(timeout)
           if (iframe && iframe.parentNode) {
             document.body.removeChild(iframe)
@@ -223,7 +228,8 @@ export const generateThumbnail = async (htmlContentOrUrl, isUrl = false) => {
       }
 
       iframe.onerror = (error) => {
-        console.error('iframe 로드 오류:', error)
+        // CSP/CORS 오류는 조용히 처리
+        console.log('iframe 로드 실패 (보안 정책 제한 가능)')
         clearTimeout(timeout)
         if (iframe && iframe.parentNode) {
           document.body.removeChild(iframe)
@@ -301,18 +307,17 @@ export const saveGameToFirestore = async (game, userId) => {
         if (thumbnailUrl) {
           console.log('게임 링크 OG 이미지 추출 완료:', thumbnailUrl)
         } else {
-          console.log('게임 링크 OG 이미지 추출 실패, iframe 방식 시도 중...')
-          // OG 이미지 실패 시 iframe 방식으로 시도
-          thumbnailUrl = await generateThumbnail(game.url, true)
-          if (thumbnailUrl) {
-            console.log('게임 링크 썸네일 생성 완료:', thumbnailUrl)
-          } else {
-            console.log('게임 링크 썸네일 생성 실패')
-            thumbnailUrl = null
-          }
+          // OG 이미지 실패 시 iframe 방식은 CSP/CORS 문제로 실패할 가능성이 높으므로 시도하지 않음
+          console.log('게임 링크 OG 이미지 추출 실패, 기본 썸네일 사용')
+          thumbnailUrl = null
         }
       } catch (thumbnailError) {
-        console.error('게임 링크 썸네일 생성 오류:', thumbnailError)
+        // CSP/CORS 오류는 조용히 처리
+        if (thumbnailError.message?.includes('CSP') || thumbnailError.message?.includes('SecurityError') || thumbnailError.message?.includes('cross-origin')) {
+          console.log('게임 링크 썸네일 생성 실패 (보안 정책 제한), 기본 썸네일 사용')
+        } else {
+          console.error('게임 링크 썸네일 생성 오류:', thumbnailError)
+        }
         thumbnailUrl = null
       }
     }
@@ -438,18 +443,17 @@ export const saveSimulationToFirestore = async (simulation, userId) => {
         if (thumbnailUrl) {
           console.log('시뮬레이션 링크 OG 이미지 추출 완료:', thumbnailUrl)
         } else {
-          console.log('시뮬레이션 링크 OG 이미지 추출 실패, iframe 방식 시도 중...')
-          // OG 이미지 실패 시 iframe 방식으로 시도
-          thumbnailUrl = await generateThumbnail(simulation.url, true)
-          if (thumbnailUrl) {
-            console.log('시뮬레이션 링크 썸네일 생성 완료:', thumbnailUrl)
-          } else {
-            console.log('시뮬레이션 링크 썸네일 생성 실패')
-            thumbnailUrl = null
-          }
+          // OG 이미지 실패 시 iframe 방식은 CSP/CORS 문제로 실패할 가능성이 높으므로 시도하지 않음
+          console.log('시뮬레이션 링크 OG 이미지 추출 실패, 기본 썸네일 사용')
+          thumbnailUrl = null
         }
       } catch (thumbnailError) {
-        console.error('시뮬레이션 링크 썸네일 생성 오류:', thumbnailError)
+        // CSP/CORS 오류는 조용히 처리
+        if (thumbnailError.message?.includes('CSP') || thumbnailError.message?.includes('SecurityError') || thumbnailError.message?.includes('cross-origin')) {
+          console.log('시뮬레이션 링크 썸네일 생성 실패 (보안 정책 제한), 기본 썸네일 사용')
+        } else {
+          console.error('시뮬레이션 링크 썸네일 생성 오류:', thumbnailError)
+        }
         thumbnailUrl = null
       }
     }
@@ -646,10 +650,13 @@ export const addGameComment = async (gameId, comment, userId, userName) => {
     
     const commentDoc = await addDoc(commentsRef, commentData)
     
-    // 게임 문서의 댓글 개수 업데이트
+    // 실제 댓글 개수를 세어서 업데이트
+    const commentsSnapshot = await getDocs(commentsRef)
+    const actualCount = commentsSnapshot.size
+    
     const gameRef = doc(db, COLLECTIONS.GAMES, gameId)
     await updateDoc(gameRef, {
-      comments: increment(1)
+      comments: actualCount
     })
 
     return { id: commentDoc.id, ...commentData }
@@ -672,10 +679,13 @@ export const addSimulationComment = async (simulationId, comment, userId, userNa
     
     const commentDoc = await addDoc(commentsRef, commentData)
     
-    // 시뮬레이션 문서의 댓글 개수 업데이트
+    // 실제 댓글 개수를 세어서 업데이트
+    const commentsSnapshot = await getDocs(commentsRef)
+    const actualCount = commentsSnapshot.size
+    
     const simRef = doc(db, COLLECTIONS.SIMULATIONS, simulationId)
     await updateDoc(simRef, {
-      comments: increment(1)
+      comments: actualCount
     })
 
     return { id: commentDoc.id, ...commentData }
@@ -780,15 +790,81 @@ export const addToolComment = async (toolId, comment, userId, userName) => {
     
     const commentDoc = await addDoc(commentsRef, commentData)
     
-    // 수업 도구 문서의 댓글 개수 업데이트
+    // 실제 댓글 개수를 세어서 업데이트
+    const commentsSnapshot = await getDocs(commentsRef)
+    const actualCount = commentsSnapshot.size
+    
     const toolRef = doc(db, COLLECTIONS.TOOLS, toolId)
     await updateDoc(toolRef, {
-      comments: increment(1)
+      comments: actualCount
     })
 
     return { id: commentDoc.id, ...commentData }
   } catch (error) {
     console.error('댓글 추가 실패:', error)
+    throw error
+  }
+}
+
+// 게임 댓글 삭제
+export const deleteGameComment = async (gameId, commentId) => {
+  try {
+    const commentRef = doc(db, COLLECTIONS.GAMES, gameId, COLLECTIONS.COMMENTS, commentId)
+    await deleteDoc(commentRef)
+    
+    // 실제 댓글 개수를 세어서 업데이트
+    const commentsRef = collection(db, COLLECTIONS.GAMES, gameId, COLLECTIONS.COMMENTS)
+    const commentsSnapshot = await getDocs(commentsRef)
+    const actualCount = commentsSnapshot.size
+    
+    const gameRef = doc(db, COLLECTIONS.GAMES, gameId)
+    await updateDoc(gameRef, {
+      comments: actualCount
+    })
+  } catch (error) {
+    console.error('댓글 삭제 실패:', error)
+    throw error
+  }
+}
+
+// 시뮬레이션 댓글 삭제
+export const deleteSimulationComment = async (simulationId, commentId) => {
+  try {
+    const commentRef = doc(db, COLLECTIONS.SIMULATIONS, simulationId, COLLECTIONS.COMMENTS, commentId)
+    await deleteDoc(commentRef)
+    
+    // 실제 댓글 개수를 세어서 업데이트
+    const commentsRef = collection(db, COLLECTIONS.SIMULATIONS, simulationId, COLLECTIONS.COMMENTS)
+    const commentsSnapshot = await getDocs(commentsRef)
+    const actualCount = commentsSnapshot.size
+    
+    const simRef = doc(db, COLLECTIONS.SIMULATIONS, simulationId)
+    await updateDoc(simRef, {
+      comments: actualCount
+    })
+  } catch (error) {
+    console.error('댓글 삭제 실패:', error)
+    throw error
+  }
+}
+
+// 수업 도구 댓글 삭제
+export const deleteToolComment = async (toolId, commentId) => {
+  try {
+    const commentRef = doc(db, COLLECTIONS.TOOLS, toolId, COLLECTIONS.COMMENTS, commentId)
+    await deleteDoc(commentRef)
+    
+    // 실제 댓글 개수를 세어서 업데이트
+    const commentsRef = collection(db, COLLECTIONS.TOOLS, toolId, COLLECTIONS.COMMENTS)
+    const commentsSnapshot = await getDocs(commentsRef)
+    const actualCount = commentsSnapshot.size
+    
+    const toolRef = doc(db, COLLECTIONS.TOOLS, toolId)
+    await updateDoc(toolRef, {
+      comments: actualCount
+    })
+  } catch (error) {
+    console.error('댓글 삭제 실패:', error)
     throw error
   }
 }
@@ -1025,18 +1101,17 @@ export const saveToolToFirestore = async (tool, userId) => {
         if (thumbnailUrl) {
           console.log('수업 도구 링크 OG 이미지 추출 완료:', thumbnailUrl)
         } else {
-          console.log('수업 도구 링크 OG 이미지 추출 실패, iframe 방식 시도 중...')
-          // OG 이미지 실패 시 iframe 방식으로 시도
-          thumbnailUrl = await generateThumbnail(tool.url, true)
-          if (thumbnailUrl) {
-            console.log('수업 도구 링크 썸네일 생성 완료:', thumbnailUrl)
-          } else {
-            console.log('수업 도구 링크 썸네일 생성 실패')
-            thumbnailUrl = null
-          }
+          // OG 이미지 실패 시 iframe 방식은 CSP/CORS 문제로 실패할 가능성이 높으므로 시도하지 않음
+          console.log('수업 도구 링크 OG 이미지 추출 실패, 기본 썸네일 사용')
+          thumbnailUrl = null
         }
       } catch (thumbnailError) {
-        console.error('수업 도구 링크 썸네일 생성 오류:', thumbnailError)
+        // CSP/CORS 오류는 조용히 처리
+        if (thumbnailError.message?.includes('CSP') || thumbnailError.message?.includes('SecurityError') || thumbnailError.message?.includes('cross-origin')) {
+          console.log('수업 도구 링크 썸네일 생성 실패 (보안 정책 제한), 기본 썸네일 사용')
+        } else {
+          console.error('수업 도구 링크 썸네일 생성 오류:', thumbnailError)
+        }
         thumbnailUrl = null
       }
     }
